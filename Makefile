@@ -183,7 +183,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_swaptest\
-	_eevdf_test\
+	_prio_test\
+	_o1_test\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

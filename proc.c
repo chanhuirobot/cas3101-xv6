@@ -139,7 +139,8 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
-  p->weight = 1;
+  p->nice = 2;
+
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
 
@@ -199,7 +200,7 @@ fork(void)
   }
   np->sz = curproc->sz;
   np->parent = curproc;
-  np->weight = curproc->weight;
+  np->nice = curproc->nice;
   *np->tf = *curproc->tf;
 
   // Clear %eax so that fork returns 0 in the child.
@@ -498,7 +499,19 @@ kill(int pid)
   return -1;
 }
 
+int nice(int value)
+{
+	struct proc *p = myproc();
+	if (value > 4)
+		value = 4;
+	else if (value < -5)
+		value = -5;
+	acquire(&ptable.lock);
+	p->nice = value;
+	release(&ptable.lock);
 
+	return p->nice;
+}
 
 //PAGEBREAK: 36
 // Print a process listing to console.  For debugging.
@@ -527,7 +540,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("%d %d %s %s", p->pid, p->nice, state, p->name);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)
@@ -535,43 +548,4 @@ procdump(void)
     }
     cprintf("\n");
   }
-}
-
-
-int sched_setattr(int request_tick, int weight)
-{
-  struct proc *p;
-  p = myproc();
-
-  if (p == 0)
-    return -1;
-  if (request_tick <= 0)
-    return -1;
-
-  if(weight < 1) weight = 1;
-  if(weight > 5) weight = 5;
-
-  p->request_tick = request_tick;
-  p->weight = weight;
-
-  // Hint: When implementing the EEVDF scheduler, total weight needs to be updated here.
-  
-  return 0;
-}
-
-int sched_getattr(int *request_tick, int *weight)
-{
-
-  struct proc *p;
-  p = myproc();
-
-  if(p == 0)
-    return -1;
-  if(p->request_tick <= 0 || p->weight < 1 || p->weight > 5)
-    return -1;
-
-  *request_tick = p->request_tick;
-  *weight = p->weight;
-
-  return 0;
 }

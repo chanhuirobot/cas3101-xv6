@@ -120,8 +120,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
-int 		sched_setattr(int request_tick, int weight);
-int 		sched_getattr(int *request_tick, int *weight);
+int 			nice(int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

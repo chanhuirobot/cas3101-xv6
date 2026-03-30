@@ -1781,7 +1781,7 @@ main(int argc, char *argv[])
 
   mem();
   pipe1();
-  preempt();
+  // preempt();
   exitwait();
 
   rmdot();
