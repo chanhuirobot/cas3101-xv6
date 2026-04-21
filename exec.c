@@ -60,8 +60,8 @@ exec(char *path, char **argv)
   end_op();
   ip = 0;
 
-  // Allocate two pages at the next page boundary.
-  // Make the first inaccessible.  Use the second as the user stack.
+  // Allocate five pages at the next page boundary.
+  // Make the first inaccessible.  Use the other as the user stack.
   sz = PGROUNDUP(sz);
   if((sz = allocuvm(pgdir, sz, sz + PGSIZE)) == 0)
     goto bad;
@@ -100,6 +100,9 @@ exec(char *path, char **argv)
   oldpgdir = curproc->pgdir;
   curproc->pgdir = pgdir;
   curproc->sz = sz;
+  curproc->stack_top = sz;
+  curproc->stack_bottom = sz - PGSIZE;
+  curproc->mmap_base = KERNBASE;
   curproc->tf->eip = elf.entry;  // main
   curproc->tf->esp = sp;
   switchuvm(curproc);

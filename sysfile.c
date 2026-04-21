@@ -443,54 +443,21 @@ sys_pipe(void)
   return 0;
 }
 
-int sys_swapread(void)
-{
-	char* ptr;
-	int blkno;
-
-	if(argptr(0, &ptr, PGSIZE) < 0 || argint(1, &blkno) < 0 )
-		return -1;
-
-	swapread(ptr, blkno);
-	return 0;
-}
-
-int sys_swapwrite(void)
-{
-	char* ptr;
-	int blkno;
-
-	if(argptr(0, &ptr, PGSIZE) < 0 || argint(1, &blkno) < 0 )
-		return -1;
-
-	swapwrite(ptr, blkno);
-	return 0;
-}
-
-int mmap(struct file* f, int off, int len, int flags)
-{
-	return -1;
-}
-
 int sys_mmap(void)
 {
-	struct file *f;
-	int off, len, flags;
-	if ( argfd(0, 0, &f) < 0 || argint(1, &off) < 0 || 
-			argint(2, &len) < 0 || argint(3, &flags) < 0 )
-		return -1;
-	return mmap(f, off, len, flags);
-}
+  int fd, off, len, flags;
 
-int munmap(void* ptr, int len)
-{
-	return -1;
+  if(argint(0, &fd) < 0 || argint(1, &off) < 0 ||
+     argint(2, &len) < 0 || argint(3, &flags) < 0)
+    return (int)MAP_FAILED;
+  return (int)mmap(fd, off, len, flags);
 }
 
 int sys_munmap(void)
 {
-	int ptr, len;
-	if ( argint(0, &ptr) < 0 || argint(1, &len) < 0)
-		return -1;
-	return munmap((void*)ptr, len);
+  int ptr, len;
+
+  if(argint(0, &ptr) < 0 || argint(1, &len) < 0)
+    return -1;
+  return munmap((void*)ptr, len);
 }

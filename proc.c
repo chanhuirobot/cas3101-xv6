@@ -91,6 +91,10 @@ found:
 
   release(&ptable.lock);
 
+  p->mmap_base = KERNBASE;
+  p->stack_top = 0;
+  p->stack_bottom = 0;
+
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
     p->state = UNUSED;
@@ -202,6 +206,9 @@ fork(void)
   np->parent = curproc;
   np->nice = curproc->nice;
   *np->tf = *curproc->tf;
+
+  np->stack_top = curproc->stack_top;
+  np->stack_bottom = curproc->stack_bottom;
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;

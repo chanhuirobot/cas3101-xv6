@@ -11,4 +11,6 @@
 #define LOGSIZE      (MAXOPBLOCKS*3)  // max data blocks in on-disk log
 #define NBUF         (MAXOPBLOCKS*3)  // size of disk block cache
 #define FSSIZE       1000  // size of file system in blocks
+#define STACK_MAX    (4 * 4096)  // max user stack size (16 KB)
+#define SWAP_BASE    2000  // first block of swap area on xv6.img
 

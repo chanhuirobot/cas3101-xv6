@@ -103,8 +103,6 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-extern int sys_swapread(void);
-extern int sys_swapwrite(void);
 extern int sys_nice(void);
 extern int sys_yield(void);
 extern int sys_frees(void);
@@ -133,8 +131,6 @@ static int (*syscalls[])(void) = {
 [SYS_link]    sys_link,
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
-[SYS_swapread]	sys_swapread,
-[SYS_swapwrite] sys_swapwrite,
 [SYS_nice] sys_nice,
 [SYS_yield] sys_yield,
 [SYS_frees] sys_frees,

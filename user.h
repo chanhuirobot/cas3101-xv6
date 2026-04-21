@@ -23,13 +23,11 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int swapread(const char*, int);
-int swapwrite(const char*, int);
 int yield(void);
 int nice(int);
 int frees(void);
-void* mmap(int, int , int, int);
-int munmap(const void*, int);
+void* mmap(int fd, int offset, int length, int flags);
+int   munmap(void *addr, int length);
 
 // ulib.c
 int stat(const char*, struct stat*);
