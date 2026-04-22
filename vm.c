@@ -6,7 +6,6 @@
 #include "mmu.h"
 #include "proc.h"
 #include "elf.h"
-#include "fcntl.h"
 
 extern char data[];  // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
@@ -387,15 +386,10 @@ copyout(pde_t *pgdir, uint va, void *p, uint len)
   return 0;
 }
 
-void *
-mmap(int fd, int offset, int length, int flags)
-{
-  return MAP_FAILED;
-}
-
 int
-munmap(void *addr, int length)
+handle_pagefault(uint fault_addr, uint err)
 {
+  // TODO: implement (Obj 1, Obj 2)
   return -1;
 }
 

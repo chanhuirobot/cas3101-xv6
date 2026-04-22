@@ -91,7 +91,6 @@ found:
 
   release(&ptable.lock);
 
-  p->mmap_base = KERNBASE;
   p->stack_top = 0;
   p->stack_bottom = 0;
 

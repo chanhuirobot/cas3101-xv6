@@ -51,7 +51,6 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
 
-  uint mmap_base;
   uint stack_top;
   uint stack_bottom;
 };

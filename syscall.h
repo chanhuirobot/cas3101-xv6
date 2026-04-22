@@ -23,5 +23,3 @@
 #define SYS_nice   24
 #define SYS_yield  25
 #define SYS_frees  26
-#define SYS_mmap   27
-#define SYS_munmap 28

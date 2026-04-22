@@ -26,8 +26,6 @@ int uptime(void);
 int yield(void);
 int nice(int);
 int frees(void);
-void* mmap(int fd, int offset, int length, int flags);
-int   munmap(void *addr, int length);
 
 // ulib.c
 int stat(const char*, struct stat*);

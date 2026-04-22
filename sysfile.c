@@ -443,21 +443,3 @@ sys_pipe(void)
   return 0;
 }
 
-int sys_mmap(void)
-{
-  int fd, off, len, flags;
-
-  if(argint(0, &fd) < 0 || argint(1, &off) < 0 ||
-     argint(2, &len) < 0 || argint(3, &flags) < 0)
-    return (int)MAP_FAILED;
-  return (int)mmap(fd, off, len, flags);
-}
-
-int sys_munmap(void)
-{
-  int ptr, len;
-
-  if(argint(0, &ptr) < 0 || argint(1, &len) < 0)
-    return -1;
-  return munmap((void*)ptr, len);
-}
