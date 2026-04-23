@@ -13,5 +13,5 @@
 #define FSSIZE       1000  // size of file system in blocks
 #define STACK_MAX    (4 * 4096)  // max user stack size (16 KB)
 #define SWAP_BASE    2000        // first block of swap area on xv6.img
-#define NSWAP_SLOT   1024        // total swap slots (= 4MB / PGSIZE)
+#define NSWAP_SLOT   8192        // total swap slots (= 32MB / PGSIZE)
 
