@@ -185,6 +185,8 @@ UPROGS=\
 	_newvmtest\
 	_dpag_test\
 	_swap_test\
+	_complex_dpag\
+	_complex_swap\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

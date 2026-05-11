@@ -13,6 +13,18 @@
 // library system call function. The saved user %esp points
 // to a saved program counter, and then the first argument.
 
+// Ensure user page at addr is physically present (demand paging).
+// Returns 0 on success, -1 if addr is not a valid demand-pageable address.
+static int
+ensure_user_page(uint addr)
+{
+  struct proc *curproc = myproc();
+  char *pa = uva2ka(curproc->pgdir, (char*)PGROUNDDOWN(addr));
+  if(pa != 0)
+    return 0;
+  return handle_pagefault(addr, 0);
+}
+
 // Fetch the int at addr from the current process.
 int
 fetchint(uint addr, int *ip)
@@ -20,6 +32,8 @@ fetchint(uint addr, int *ip)
   struct proc *curproc = myproc();
 
   if(addr >= curproc->sz || addr+4 > curproc->sz)
+    return -1;
+  if(ensure_user_page(addr) < 0)
     return -1;
   *ip = *(int*)(addr);
   return 0;
@@ -36,11 +50,16 @@ fetchstr(uint addr, char **pp)
 
   if(addr >= curproc->sz)
     return -1;
-  *pp = (char*)addr;
   ep = (char*)curproc->sz;
-  for(s = *pp; s < ep; s++){
-    if(*s == 0)
-      return s - *pp;
+  for(s = (char*)addr; s < ep; s++){
+    if(((uint)s % PGSIZE == 0) || s == (char*)addr){
+      if(ensure_user_page((uint)s) < 0)
+        return -1;
+    }
+    if(*s == 0){
+      *pp = (char*)addr;
+      return s - (char*)addr;
+    }
   }
   return -1;
 }
@@ -59,12 +78,21 @@ int
 argptr(int n, char **pp, int size)
 {
   int i;
+  uint va;
   struct proc *curproc = myproc();
- 
+
   if(argint(n, &i) < 0)
     return -1;
   if(size < 0 || (uint)i >= curproc->sz || (uint)i+size > curproc->sz)
     return -1;
+  // Pre-fault all pages in the buffer range before any spinlock is acquired
+  // during kernel copy operations (piperead/consoleread hold spinlocks while
+  // writing to user buffers; swap-in requires disk I/O which cannot sleep
+  // while a spinlock is held).
+  for(va = PGROUNDDOWN((uint)i); va < (uint)(i + size); va += PGSIZE){
+    if(ensure_user_page(va) < 0)
+      return -1;
+  }
   *pp = (char*)i;
   return 0;
 }

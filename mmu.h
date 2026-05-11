@@ -96,6 +96,7 @@ struct segdesc {
 #define PTE_U           0x004   // User
 #define PTE_D           0x040   // Dirty
 #define PTE_PS          0x080   // Page Size
+#define PTE_SWAPPED     0x400   // Swapped out (only valid when PTE_P=0)
 
 // Address in page table or page directory entry
 #define PTE_ADDR(pte)   ((uint)(pte) & ~0xFFF)

@@ -168,8 +168,10 @@ growproc(int n)
 
   sz = curproc->sz;
   if(n > 0){
-    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
+    // demand paging: proc->sz만 증가, 물리 페이지는 fault 때 할당
+    if(sz + n >= KERNBASE)
       return -1;
+    sz = sz + n;
   } else if(n < 0){
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
@@ -206,8 +208,14 @@ fork(void)
   np->nice = curproc->nice;
   *np->tf = *curproc->tf;
 
-  np->stack_top = curproc->stack_top;
+  np->stack_top    = curproc->stack_top;
   np->stack_bottom = curproc->stack_bottom;
+
+  // Obj3: ELF 정보 복사 (자식도 동일한 실행파일을 demand load)
+  np->elf_ip   = curproc->elf_ip ? idup(curproc->elf_ip) : 0;
+  np->elf_end  = curproc->elf_end;
+  np->elf_nseg = curproc->elf_nseg;
+  memmove(np->elf_segs, curproc->elf_segs, sizeof(curproc->elf_segs));
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -253,6 +261,11 @@ exit(void)
 
   begin_op();
   iput(curproc->cwd);
+  // Obj3: ELF inode 해제
+  if(curproc->elf_ip){
+    iput(curproc->elf_ip);
+    curproc->elf_ip = 0;
+  }
   end_op();
   curproc->cwd = 0;
 

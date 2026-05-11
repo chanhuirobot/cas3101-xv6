@@ -15,6 +15,7 @@ exec(char *path, char **argv)
   uint argc, sz, sp, ustack[3+MAXARG+1];
   struct elfhdr elf;
   struct inode *ip;
+  struct inode *elf_ip_ref = 0;
   struct proghdr ph;
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
@@ -38,8 +39,12 @@ exec(char *path, char **argv)
   if((pgdir = setupkvm()) == 0)
     goto bad;
 
-  // Load program into memory.
   sz = 0;
+  int nseg = 0;
+  struct {
+    uint vaddr; uint memsz; uint filesz; uint off;
+  } segs[4];
+
   for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)){
     if(readi(ip, (char*)&ph, off, sizeof(ph)) != sizeof(ph))
       goto bad;
@@ -49,13 +54,20 @@ exec(char *path, char **argv)
       goto bad;
     if(ph.vaddr + ph.memsz < ph.vaddr)
       goto bad;
-    if((sz = allocuvm(pgdir, sz, ph.vaddr + ph.memsz)) == 0)
-      goto bad;
     if(ph.vaddr % PGSIZE != 0)
       goto bad;
-    if(loaduvm(pgdir, (char*)ph.vaddr, ip, ph.off, ph.filesz) < 0)
+    if(nseg >= 4)
       goto bad;
+    segs[nseg].vaddr  = ph.vaddr;
+    segs[nseg].memsz  = ph.memsz;
+    segs[nseg].filesz = ph.filesz;
+    segs[nseg].off    = ph.off;
+    nseg++;
+    if(ph.vaddr + ph.memsz > sz)
+      sz = ph.vaddr + ph.memsz;
   }
+
+  elf_ip_ref = idup(ip);
   iunlockput(ip);
   end_op();
   ip = 0;
@@ -98,12 +110,27 @@ exec(char *path, char **argv)
 
   // Commit to the user image.
   oldpgdir = curproc->pgdir;
-  curproc->pgdir = pgdir;
-  curproc->sz = sz;
-  curproc->stack_top = sz;
+
+  if(curproc->elf_ip)
+    iput(curproc->elf_ip);
+
+  curproc->pgdir        = pgdir;
+  curproc->sz           = sz;
+  curproc->stack_top    = sz;
   curproc->stack_bottom = sz - PGSIZE;
-  curproc->tf->eip = elf.entry;  // main
-  curproc->tf->esp = sp;
+  curproc->tf->eip      = elf.entry;
+  curproc->tf->esp      = sp;
+
+  curproc->elf_ip   = elf_ip_ref;
+  curproc->elf_end  = curproc->stack_top - 5 * PGSIZE;
+  curproc->elf_nseg = nseg;
+  for(i = 0; i < nseg; i++){
+    curproc->elf_segs[i].vaddr  = segs[i].vaddr;
+    curproc->elf_segs[i].memsz  = segs[i].memsz;
+    curproc->elf_segs[i].filesz = segs[i].filesz;
+    curproc->elf_segs[i].off    = segs[i].off;
+  }
+
   switchuvm(curproc);
   freevm(oldpgdir);
   return 0;
@@ -115,5 +142,7 @@ exec(char *path, char **argv)
     iunlockput(ip);
     end_op();
   }
+  if(elf_ip_ref)
+    iput(elf_ip_ref);
   return -1;
 }

@@ -64,18 +64,23 @@ trap(struct trapframe *tf)
     // Bochs generates spurious IDE1 interrupts.
     break;
   case T_PGFLT:
-    // PA3 objective 2
-    // replace the xv6 behavior with demandpaging
     if(myproc() == 0 || (tf->cs & 3) == 0){
-      cprintf("page fault from cpu %d eip %x (cr2=0x%x)\n",
-              cpuid(), tf->eip, rcr2());
+      uint fault_va = rcr2();
+      if(myproc() != 0 && fault_va < KERNBASE && !(tf->err & PTE_P)){
+        if(handle_pagefault(fault_va, tf->err) >= 0)
+          break;
+      }
+      cprintf("kernel page fault at 0x%x\n", fault_va);
       panic("trap");
     }
-    cprintf("pid %d %s: page fault err %d on cpu %d "
-            "eip 0x%x addr 0x%x--kill proc\n",
-            myproc()->pid, myproc()->name,
-            tf->err, cpuid(), tf->eip, rcr2());
-    myproc()->killed = 1;
+    {
+      uint uva = rcr2();
+      if(handle_pagefault(uva, tf->err) < 0){
+        cprintf("pid %d %s: segfault at 0x%x\n",
+                myproc()->pid, myproc()->name, uva);
+        myproc()->killed = 1;
+      }
+    }
     break;
   case T_IRQ0 + IRQ_KBD:
     kbdintr();

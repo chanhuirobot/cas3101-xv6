@@ -53,6 +53,17 @@ struct proc {
 
   uint stack_top;
   uint stack_bottom;
+
+  // Obj3: executable demand paging
+  struct inode *elf_ip;          // 실행 파일 inode (demand load용)
+  uint          elf_end;         // ELF 세그먼트 끝 주소 (= guard page 시작)
+  int           elf_nseg;        // LOAD 세그먼트 수
+  struct {
+    uint vaddr;   // 세그먼트 가상 주소 시작
+    uint memsz;   // 메모리 크기 (bss 포함)
+    uint filesz;  // 파일에서 읽을 크기
+    uint off;     // 파일 내 오프셋
+  } elf_segs[4];  // text, data 등 최대 4개
 };
 
 // Process memory is laid out contiguously, low addresses first:
